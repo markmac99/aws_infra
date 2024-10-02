@@ -14,7 +14,7 @@ Resources:
       Policies: [AmazonS3FullAccess]
       Environment:
         Variables:
-          ACFOLDER: auroracam
+          ACFOLDER: UK9999
           ACBUCKET: mjmm-data
       Events:
         HttpGet:
