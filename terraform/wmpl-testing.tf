@@ -35,6 +35,8 @@ resource "aws_instance" "testserver" {
   tags = {
     "Name"       = "testserver"
     "billingtag" = "GMN"
+    "Route53FQDN" = "testserver.markmcintyreastro.co.uk"
+    "DNSRecordType" = "A"
   }
 }
 
