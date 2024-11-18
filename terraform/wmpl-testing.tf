@@ -1,7 +1,7 @@
 # copyright mark mciontyre, 2024-
 
 # create the batch server
-
+/*
 resource "aws_instance" "testserver" {
   ami                    = "ami-0e8d228ad90af673b"  # ubuntu 22.04
   instance_type          = "c6a.4xlarge" # x64, 16 cpu, 32 GB 
@@ -45,6 +45,33 @@ resource "aws_route53_record" "testserver" {
   type      = "A"
   name      = "testserver"
   records   = [aws_instance.testserver.public_ip]
-  ttl       = 300
+  ttl       = 60
 }
 
+resource "aws_cloudwatch_metric_alarm" "testServerIdle" {
+  alarm_name                = "Test server idle shutdown"
+  comparison_operator       = "LessThanOrEqualToThreshold"
+  evaluation_periods        = "6"
+  metric_name               = "CPUUtilization"
+  namespace                 = "AWS/EC2"
+  period                    = "300"
+  statistic                 = "Maximum"
+  threshold                 = "0.5"
+  alarm_description         = "CPUUtilization <= 0.5 for 6 datapoints within 30 minutes"
+  insufficient_data_actions = []
+  ok_actions                = []
+  datapoints_to_alarm       = 4
+  alarm_actions = [
+    "arn:aws:automate:${var.region}:ec2:stop",
+  ]
+  dimensions = {
+    "InstanceId" = aws_instance.testserver.id
+  }
+  tags = {
+    "billingtag" = "wmpl"
+  }
+
+   actions_enabled           = true
+}
+
+*/

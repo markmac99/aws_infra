@@ -38,6 +38,8 @@ resource "aws_instance" "batchserver" {
   tags = {
     "Name"       = "batchserver"
     "billingtag" = "MarksWebsite"
+    "Route53FQDN" = "batchserver.markmcintyreastro.co.uk"
+    "DNSRecordType" = "A"
   }
 }
 
