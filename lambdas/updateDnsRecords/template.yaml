@@ -10,9 +10,6 @@ Resources:
       MemorySize: 128
       Handler: lambda_function.lambda_handler
       Timeout: 10
-      Environment:
-        Variables:
-          region: "eu-west-2"
       Policies:
       - Statement:
         - Action:
