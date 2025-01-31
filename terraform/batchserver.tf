@@ -48,7 +48,7 @@ resource "aws_route53_record" "batchserver" {
   type      = "A"
   name      = "batchserver"
   records   = [aws_instance.batchserver.public_ip]
-  ttl       = 300
+  ttl       = 60
 }
 
 resource "aws_security_group" "ec2publicsg" {
@@ -100,7 +100,20 @@ resource "aws_security_group" "ec2publicsg" {
       security_groups  = []
       self             = false
     },
-  ]
+    {
+      cidr_blocks      = [
+         "0.0.0.0/0",
+      ]
+      description      = ""
+      from_port        = 3389
+      ipv6_cidr_blocks = []
+      prefix_list_ids  = []
+      protocol         = "tcp"
+      security_groups  = []
+      self             = false
+      to_port          = 3389
+    }
+]
   egress = [
     {
       cidr_blocks      = ["0.0.0.0/0"]

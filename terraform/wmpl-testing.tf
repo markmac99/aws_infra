@@ -1,12 +1,11 @@
 # copyright mark mciontyre, 2024-
 
-# create the batch server
+# create the GMN server
 /*
 resource "aws_instance" "testserver" {
-  ami                    = "ami-0e8d228ad90af673b"  # ubuntu 22.04
+  #ami                    = "ami-0e8d228ad90af673b"  # ubuntu 22.04
+  ami                     = "ami-0e681fbfa34618329" # my image based on Ubuntu 24.04 with stuff preinstalled
   instance_type          = "c6a.4xlarge" # x64, 16 cpu, 32 GB 
-  #ami                    = "ami-078efbc5c23916053" # Amazon Linux 3 
-  #instance_type          = "c6g.4xlarge" # arm64, 16 cpu, 32 GB
   iam_instance_profile = data.aws_iam_instance_profile.s3fullaccess.name
   key_name             = aws_key_pair.marks_key.key_name
   security_groups      = [aws_security_group.ec2publicsg.name]
@@ -54,7 +53,7 @@ resource "aws_cloudwatch_metric_alarm" "testServerIdle" {
   evaluation_periods        = "6"
   metric_name               = "CPUUtilization"
   namespace                 = "AWS/EC2"
-  period                    = "300"
+  period                    = "600"
   statistic                 = "Maximum"
   threshold                 = "0.5"
   alarm_description         = "CPUUtilization <= 0.5 for 6 datapoints within 30 minutes"
@@ -73,5 +72,4 @@ resource "aws_cloudwatch_metric_alarm" "testServerIdle" {
 
    actions_enabled           = true
 }
-
 */
