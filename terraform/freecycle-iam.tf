@@ -33,11 +33,10 @@ resource "aws_iam_policy" "freecycle_policy" {
       Statement = [
         {
           Action = [
-            #"logs:FilterLogEvents",
-            #"logs:GetLogEvents",
             "logs:*",
             "s3:*",
             "s3-object-lambda:*",
+            "dynamodb:*",
           ]
           Effect = "Allow"
           Resource = [
@@ -49,7 +48,7 @@ resource "aws_iam_policy" "freecycle_policy" {
     }
   )
   tags = {
-    "billingtag" = "ukmon"
+    "billingtag" = "freecycle"
   }
 }
 
@@ -73,4 +72,57 @@ resource "aws_lambda_permission" "perm_toycycle_lambda" {
   principal      = "ses.amazonaws.com"
   source_account = "317976261112"
   #source_arn     = aws_s3_bucket.tv-freecycle.arn
+}
+
+resource "aws_iam_user" "freecycle_user" {
+  name = "freecycle"
+  force_destroy = false
+}
+
+resource "aws_iam_policy" "freecycle_user_policy" {
+  name        = "freecycle_access"
+  description = "Access to S3 and Athena for freecycle processes"
+  policy = jsonencode(
+    {
+      Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "dynamodb:*"
+        Resource = "*"
+        Sid      = "dynamodbperms"
+        },
+      {
+        Action   = "s3:ListBucket"
+        Effect   = "Allow"
+        Resource = [
+          "arn:aws:s3:::tv-freecycle",
+          "arn:aws:s3:::tvf-att",
+        ]
+        Sid      = "VisualEditor0"
+      },
+      {
+        Action   = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject",
+        ]
+        Effect   = "Allow"
+        Resource = [
+          "arn:aws:s3:::tv-freecycle/*",
+          "arn:aws:s3:::tvf-att/*",
+        ]
+        Sid      = "VisualEditor1"
+      },
+      ]
+    Version   = "2012-10-17"      
+    }
+  )
+  tags = {
+    "billingtag" = "freecycle"
+  }
+}
+
+resource "aws_iam_user_policy_attachment" "fs_user_attach" {
+  user       = aws_iam_user.freecycle_user.name
+  policy_arn = aws_iam_policy.freecycle_user_policy.arn
 }
