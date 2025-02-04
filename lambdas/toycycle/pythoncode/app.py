@@ -3,14 +3,38 @@ import os
 import sys
 from email import policy
 import boto3
-from botocore.exceptions import ClientError
-import time
 from datetime import datetime
 import pyheif
 from PIL import Image
 
 targetBucket = 'tv-freecycle'
 attbucket = "tvf-att"
+
+
+def getLastUniqueid(table='toycycle', ddb=None):
+    if not ddb:
+        ddb = boto3.resource('dynamodb', region_name='eu-west-1')
+    table = ddb.Table(table)
+    res = table.scan()
+    values = res.get('Items', [])
+    lastuniqueid = 0
+    for v in values:
+        uid = int(v['uniqueid'])
+        if uid > lastuniqueid:
+            lastuniqueid = uid    
+    return lastuniqueid
+
+
+def addRow(tblname='toycycle', ddb=None, newdata=None):
+    if not newdata:
+        return 
+    if not ddb:
+        ddb = boto3.resource('dynamodb', region_name='eu-west-1')
+    table = ddb.Table(tblname)
+    response = table.put_item(Item=newdata)
+    if response['ResponseMetadata']['HTTPStatusCode'] != 200:
+        print('error writing to table')
+    return 
 
 
 def convertHEIC(srcfile):
@@ -22,16 +46,15 @@ def convertHEIC(srcfile):
     return newn
 
 
-def createLine(fname, targetBucket, attnames):
+def createLine(fname, tblname, attnames):
     f = open(fname, 'r')
     lines = [line.rstrip('\n') for line in f]
     lines = [x for x in lines if x.strip()]
     f.close()
     numlines = len(lines)
-    print(lines, numlines)
+    print(lines)
 
-    nowdt = datetime.now().strftime('%Y%m%d%H%M%S')
-    csvline = nowdt + ','
+    created = datetime.now().strftime('%Y%m%d%H%M%S')
     typ = lines[0].rstrip('\n')[7:]
     ite = lines[1].rstrip('\n')[6:]
     ite = ite.replace('&', '&amp;').replace(',', '&#44;').replace('"', '&rdquo;')
@@ -56,67 +79,51 @@ def createLine(fname, targetBucket, attnames):
         pri = '0'
     else:
         pri = pri.replace('£', '')
+
     nam = lines[i + 1].rstrip('\n')[6:]
     pho = lines[i + 2].rstrip('\n')[7:]
     ema = lines[i + 3].rstrip('\n')[7:]
-    csvline = csvline + typ + ',' + ite + ',' + des + ','
-    csvline = csvline + pri + ',' + nam + ',' + pho + ',' + ema
-    if numlines == 7:
-        csvline = csvline + ',,,,0'
-    elif numlines == 8:
-        url = attnames[0]
-        csvline = csvline + ',' + url + ',,,0'
+
+    url1 = ''
+    url2 = ''
+    url3 = ''
+    if numlines == 8:
+        url1 = attnames[0]
     elif numlines == 9:
-        url = attnames[0]
-        url1 = attnames[1]
-        csvline = csvline + ',' + url + ',' + url1 + ',,0'
+        url1 = attnames[0]
+        url2 = attnames[1]
     else:
-        url = attnames[0]
-        url1 = attnames[1]
-        url2 = attnames[2]
-        csvline = csvline + ',' + url + ',' + url1 + ',' + url2 + ',0'
+        url1 = attnames[0]
+        url2 = attnames[1]
+        url3 = attnames[2]
 
-    csvline = csvline + '\n'
-
-    s3 = boto3.client('s3')
-
-    idxname = os.getenv('INDEXFILE',default="freecycle-data.csv")
-    idxfolder = os.getenv('INDEXFLDR', default="fslist")
-    idxFile = idxfolder + '/' + idxname
-    fileName = os.path.join(os.getenv('TMP', default='/tmp'), idxname)
-    print(idxFile, fileName, targetBucket)
-
-    s3.download_file(Bucket=targetBucket, Key=idxFile, Filename=fileName)
-    with open(fileName, "a+") as f:
-        print('writing ', csvline)
-        f.write(csvline)
-    f.close()
-    s3.upload_file(Bucket=targetBucket, Key=idxFile, Filename=fileName)
-    return csvline
+    uniqueid = getLastUniqueid(table=tblname) + 1
+    dtval = datetime.datetime.strptime(str(created), '%Y%m%d%H%M%S')
+    expdate = int((dtval + datetime.timedelta(days=50)).timestamp())
+    newdata = {'uniqueid': f'{uniqueid:09d}', 'recType': typ, 
+            'Item': ite, 'description':des, 'price': str(pri), 
+            'contact_n': nam, 'contact_p': pho, 'contact_e': ema,
+            'url1': url1, 'url2': url2, 'url3': url3, 
+            'isdeleted': '0', 'created': str(created), 'expirydate': expdate}
+    print(newdata)
+    addRow(newdata=newdata, tblname=tblname)
+    return
 
 
 def lambda_handler(event, context):
+    print('starting')
     s3 = boto3.client('s3')
 
     if 'Records' not in event:
+        print('no record')
         return 
     record = event['Records'][0]
     if 'eventSource' not in record:
+        print('no eventSource')
         return 
 
-    inuseflg = os.getenv('INDEXFLDR', default="fslist") + '/inuse.txt'
-    inuse = True
-    while inuse is True:
-        try:
-            s3.head_object(Bucket=targetBucket, Key=inuseflg)
-            print('csv file in use, waiting')
-            time.sleep(5)
-            inuse = True
-        except ClientError:
-            inuse = False
-
     try:
-        fsobj = s3.get_object(Bucket=targetBucket, Key='freecycle/' + record['ses']['mail']['messageId'])
+        fsobj = s3.get_object(Bucket=targetBucket, Key='toycycle/' + record['ses']['mail']['messageId'])
     except:
         print('email object not found')
         return
@@ -127,41 +134,40 @@ def lambda_handler(event, context):
     except:
         print('unable to find message body')
         return
-    # print(bdy.get_content())
-    fileName = record['ses']['mail']['messageId'] + '.txt'
-    filePath = os.path.join(os.getenv('TMP', default='/tmp'), fileName)
-    fp = open(filePath, 'w')
+    
     msgbdy = bdy.get_content()
-    fp.write(msgbdy.replace('\r', ''))
 
-    attnames = []
-    for part in msg.walk():
-        if part.get_content_maintype() == 'multipart':
-            continue
-        if part.get('Content-Disposition') is None:
-            continue
-        imgName = part.get_filename()
-        imgPath = os.path.join(os.getenv('TMP', default='/tmp'), imgName)
-        keyName = imgName
-        ifp = open(imgPath, 'wb')
-        data = part.get_payload(decode=True)
-        ifp.write(data)
-        ifp.close()
-        if b'ftypheic' in data:
-            imgPath = convertHEIC(imgPath)
-            keyName = os.path.split(imgPath)[1]
-        print(f'attachment {keyName}')
-        attnames.append(keyName)
-        s3.upload_file(Bucket=attbucket, Key=keyName, Filename=imgPath,
-                ExtraArgs={'ContentType': "image/jpg", 'ACL': "public-read"})
+    fileName = record['ses']['mail']['messageId'] + '.txt'
+    filePath = os.path.join('/tmp', fileName)
+    with open(filePath, 'w') as fp:
+        fp.write(msgbdy.replace('\r', ''))
 
-        lin = 'url: ' + imgName + '\n'
-        fp.write(lin)
-        print('saved attachment')
-    fp.close()
+        attnames = []
+        for part in msg.walk():
+            if part.get_content_maintype() == 'multipart':
+                continue
+            if part.get('Content-Disposition') is None:
+                continue
+            imgName = part.get_filename()
+            imgPath = os.path.join('/tmp', imgName)
+            keyName = imgName
+            with open(imgPath, 'wb') as ifp:
+                data = part.get_payload(decode=True)
+                ifp.write(data)
+            if b'ftypheic' in data:
+                imgPath = convertHEIC(imgPath)
+                keyName = os.path.split(imgPath)[1]
+            print(f'attachment {keyName}')
+            attnames.append(keyName)
+            s3.upload_file(Bucket=attbucket, Key=keyName, Filename=imgPath,
+                    ExtraArgs={'ContentType': "image/jpg", 'ACL': "public-read"})
 
-    print('adding line to file')
-    createLine(filePath, targetBucket, attnames)
+            lin = 'url: ' + imgName + '\n'
+            fp.write(lin)
+            print('saved attachment')
+
+    print('adding line to database')
+    createLine(filePath, 'toycycle', attnames)
 
     tmpf = 'bodies/' + fileName
     s3.upload_file(Bucket=targetBucket, Key=tmpf, Filename=filePath,
@@ -173,7 +179,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         msg = {'messageId': sys.argv[1]}
     else:
-        msg = {'messageId': '1gb599l09j4gqdcmmakkr9ebi5oc4l1vfolbl101'}
+        msg = {'messageId': 'dlhngt12p9qd0li6kgnm78fte683gukua3om2no1'}
     ml = {'mail': msg}
     ses = {'ses': ml, 'eventSource': 'aws:ses'}
     recs = []
