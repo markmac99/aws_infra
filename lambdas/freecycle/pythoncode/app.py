@@ -4,7 +4,8 @@ import sys
 from email import policy
 import boto3
 import datetime
-import pyheif
+if sys.platform != 'win32':
+    import pyheif
 from PIL import Image
 
 targetBucket = 'tv-freecycle'
@@ -38,12 +39,15 @@ def addRow(tblname='freecycle', ddb=None, newdata=None):
 
 
 def convertHEIC(srcfile):
-    img=pyheif.read(srcfile)
-    image = Image.frombytes(img.mode, img.size, img.data, "raw", img.mode, img.stride)
-    fn, _ = os.path.splitext(srcfile)
-    newn = fn + '.jpg'
-    image.save(newn)
-    return newn
+    if sys.platform !='win32':
+        img=pyheif.read(srcfile)
+        image = Image.frombytes(img.mode, img.size, img.data, "raw", img.mode, img.stride)
+        fn, _ = os.path.splitext(srcfile)
+        newn = fn + '.jpg'
+        image.save(newn)
+        return newn
+    else:
+        return srcfile
 
 
 def createLine(fname, tblname, attnames):
