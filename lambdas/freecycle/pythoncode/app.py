@@ -3,7 +3,7 @@ import os
 import sys
 from email import policy
 import boto3
-from datetime import datetime
+import datetime
 import pyheif
 from PIL import Image
 
@@ -54,7 +54,7 @@ def createLine(fname, tblname, attnames):
     numlines = len(lines)
     print(lines)
 
-    created = datetime.now().strftime('%Y%m%d%H%M%S')
+    created = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
     typ = lines[0].rstrip('\n')[7:]
     ite = lines[1].rstrip('\n')[6:]
     ite = ite.replace('&', '&amp;').replace(',', '&#44;').replace('"', '&rdquo;')
@@ -87,14 +87,11 @@ def createLine(fname, tblname, attnames):
     url1 = ''
     url2 = ''
     url3 = ''
-    if numlines == 8:
+    if len(attnames) > 0:
         url1 = attnames[0]
-    elif numlines == 9:
-        url1 = attnames[0]
+    if len(attnames) > 1:
         url2 = attnames[1]
-    else:
-        url1 = attnames[0]
-        url2 = attnames[1]
+    if len(attnames) > 2:
         url3 = attnames[2]
 
     uniqueid = getLastUniqueid(table=tblname) + 1
@@ -105,7 +102,7 @@ def createLine(fname, tblname, attnames):
             'contact_n': nam, 'contact_p': pho, 'contact_e': ema,
             'url1': url1, 'url2': url2, 'url3': url3, 
             'isdeleted': '0', 'created': str(created), 'expirydate': expdate}
-    print(newdata)
+    # print(newdata)
     addRow(newdata=newdata, tblname=tblname)
     return
 
@@ -127,6 +124,7 @@ def lambda_handler(event, context):
     except:
         print('email object not found')
         return
+    print(f"reading {record['ses']['mail']['messageId']}")
     try:
         raw_mail = fsobj['Body'].read()
         msg = email.message_from_bytes(raw_mail, policy=policy.default)
@@ -139,10 +137,10 @@ def lambda_handler(event, context):
 
     fileName = record['ses']['mail']['messageId'] + '.txt'
     filePath = os.path.join('/tmp', fileName)
+    attnames = []
     with open(filePath, 'w') as fp:
         fp.write(msgbdy.replace('\r', ''))
 
-        attnames = []
         for part in msg.walk():
             if part.get_content_maintype() == 'multipart':
                 continue
@@ -184,7 +182,7 @@ if __name__ == '__main__':
     ses = {'ses': ml, 'eventSource': 'aws:ses'}
     recs = []
     recs.append(ses)
-    a = {'Records': recs}
-    b = 0
-    print(a)
-    lambda_handler(a, b)
+    recorddets = {'Records': recs}
+    print(f'processing {msg}')
+    print(f'details{recorddets}')
+    lambda_handler(recorddets, 0)
