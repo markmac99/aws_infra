@@ -81,7 +81,7 @@ def createNewIndex(buck, obj):
     fldr, fname = os.path.split(obj)
     if fname[:6]=='startr':
         copysrc={'Bucket': buck, 'Key':obj}
-        s3.meta.client.copy_object(CopySource=copysrc, Bucket=buck, Key=f'allsky/images/startrails-latest.jpg')
+        s3.meta.client.copy_object(CopySource=copysrc, Bucket=buck, Key='allsky/images/startrails-latest.jpg')
     objlist = s3.meta.client.list_objects_v2(Bucket=buck,Prefix=fldr)
     if objlist['KeyCount'] > 0:
         keys = objlist['Contents']
