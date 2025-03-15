@@ -19,7 +19,7 @@ resource "aws_instance" "batchserver" {
       "Name"       = "BatcherverRootDisk"
       "billingtag" = "MarksWebsite"
     }
-    volume_size = 20
+    volume_size = 30
     volume_type = "gp3"
     throughput = 125
     iops = 3000

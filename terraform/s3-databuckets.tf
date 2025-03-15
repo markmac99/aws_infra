@@ -138,7 +138,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     default_ttl            = 0
     max_ttl                = 0
     min_ttl                = 0
-    path_pattern           = "/auroracam/*.jpg"
+    path_pattern           = "/UK9999/*.jpg"
     smooth_streaming       = false
     target_origin_id       = aws_s3_bucket.mjmm-data.bucket_regional_domain_name 
     trusted_key_groups     = []
