@@ -60,8 +60,8 @@ resource "aws_route_table" "default" {
     gateway_id = aws_internet_gateway.main_igw.id
   }
   route {
-    ipv6_cidr_block = "::/48"
-    gateway_id = aws_internet_gateway.main_igw.id
+    ipv6_cidr_block = "::/0"
+    egress_only_gateway_id     = "eigw-030182b91e129b0ef"
   }
   route {
     cidr_block                = "172.32.0.0/16"
@@ -79,5 +79,13 @@ resource "aws_internet_gateway" "main_igw" {
   tags = {
     Name       = "main_igw"
     billingtag = "Management"
+  }
+}
+
+resource "aws_egress_only_internet_gateway" "main_eoigw" {
+  vpc_id = aws_vpc.main_vpc.id
+
+  tags = {
+    Name = "egress_gw_ipv6"
   }
 }
