@@ -46,6 +46,7 @@ resource "aws_subnet" "lambdaSubnet" {
 resource "aws_subnet" "ec2Subnet" {
   vpc_id                  = aws_vpc.main_vpc.id
   cidr_block              = "172.31.0.0/20"
+  ipv6_cidr_block         = "2a05:d01c:a00:3201::/64"
   map_public_ip_on_launch = true
   tags = {
     Name       = "ec2Subnet"
@@ -61,7 +62,7 @@ resource "aws_route_table" "default" {
   }
   route {
     ipv6_cidr_block = "::/0"
-    egress_only_gateway_id     = "eigw-030182b91e129b0ef"
+    gateway_id = aws_internet_gateway.main_igw.id
   }
   route {
     cidr_block                = "172.32.0.0/16"
