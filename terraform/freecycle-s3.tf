@@ -9,6 +9,7 @@ resource "aws_s3_bucket" "tv-freecycle" {
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "tv_lifecycle_rule" {
+  transition_default_minimum_object_size = "varies_by_storage_class"
   bucket = aws_s3_bucket.tv-freecycle.id
   rule {
     id     = "delete athena queries"
@@ -21,7 +22,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "tv_lifecycle_rule" {
     }
     expiration {
       days                         = 1
-      expired_object_delete_marker = false
     }
   }
   rule {
@@ -30,7 +30,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "tv_lifecycle_rule" {
 
     expiration {
       days                         = 30
-      expired_object_delete_marker = false
     }
 
     filter {
@@ -47,7 +46,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "tv_lifecycle_rule" {
 
     expiration {
       days                         = 30
-      expired_object_delete_marker = false
     }
 
     filter {
@@ -71,13 +69,14 @@ resource "aws_s3_bucket" "tvf-att" {
 
 resource "aws_s3_bucket_lifecycle_configuration" "tvf_att_lifecycle_rule" {
   bucket = aws_s3_bucket.tvf-att.id
+  transition_default_minimum_object_size = "varies_by_storage_class"
   rule {
     id     = "expire old files"
     status = "Enabled"
     expiration {
       days                         = 180
-      expired_object_delete_marker = false
     }
+    filter {}
   }
   rule {
     id     = "delete expired object"

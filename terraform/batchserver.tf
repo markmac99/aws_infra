@@ -123,7 +123,19 @@ resource "aws_security_group" "ec2publicsg" {
       security_groups  = []
       self             = false
       to_port          = 22
+    },
+    {
+      cidr_blocks      = ["0.0.0.0/0"]
+      description      = "icmp"
+      from_port        = -1
+      ipv6_cidr_blocks = []
+      prefix_list_ids  = []
+      protocol         = "icmp"
+      security_groups  = []
+      self             = false
+      to_port          = -1
     }    
+
   ]
   egress = [
     {

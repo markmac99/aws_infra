@@ -18,6 +18,7 @@ resource "aws_subnet" "subnet1" {
   cidr_block              = "172.31.16.0/20"
   ipv6_cidr_block         = "2a05:d01c:a00:3200::/64"
   map_public_ip_on_launch = true
+  timeouts {}
   tags = {
     Name       = "Subnet1"
     billingtag = "Management"
@@ -28,6 +29,7 @@ resource "aws_subnet" "subnet2" {
   vpc_id                  = aws_vpc.main_vpc.id
   map_public_ip_on_launch = true
   cidr_block              = "172.31.32.0/20"
+  timeouts {}
   tags = {
     Name       = "Subnet2"
     billingtag = "MarysWebsite"
@@ -37,6 +39,7 @@ resource "aws_subnet" "subnet2" {
 resource "aws_subnet" "lambdaSubnet" {
   vpc_id     = aws_vpc.main_vpc.id
   cidr_block = "172.31.255.0/28"
+  timeouts {}
   tags = {
     Name       = "lambdaSubnet"
     billingtag = "ukmon"
@@ -47,6 +50,7 @@ resource "aws_subnet" "ec2Subnet" {
   vpc_id                  = aws_vpc.main_vpc.id
   cidr_block              = "172.31.0.0/20"
   ipv6_cidr_block         = "2a05:d01c:a00:3201::/64"
+  timeouts {}
   map_public_ip_on_launch = true
   tags = {
     Name       = "ec2Subnet"
