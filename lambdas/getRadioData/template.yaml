@@ -64,9 +64,9 @@ Resources:
               S3Key:
                 Rules:
                 - Name: prefix
-                  Value: raw/
+                  Value: tmp/
                 - Name: suffix
-                  Value: .jpg
+                  Value: .npz
     Metadata:
       BuildMethod: python3.11
 

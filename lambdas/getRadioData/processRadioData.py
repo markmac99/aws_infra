@@ -221,16 +221,19 @@ def readEventLogFile(evtfile, coloffset=0, inparray=None):
         myarray = np.zeros((24, mthdays), dtype=int)
     else:
         myarray = inparray
+    if not os.path.isfile(evtfile):
+        return myarray, 0, 0, 0, 0
     with open(evtfile) as myfile:
         mydata = csv.reader(myfile, delimiter=',')
+        next(mydata)
         line_count = 0
         for row in mydata:
             if len(row) <1:
                 continue
-            ymd = datetime.datetime.strptime(row[0], '%Y/%m/%d')
+            ymd = datetime.datetime.strptime(row[1], '%Y-%m-%d')
             if ym is None:
                 ym = ymd.strftime('%Y%m')
-            hms = row[1]
+            hms = row[2]
             hr = int(hms[:2])
             myarray[hr, ymd.day - 1 + coloffset] = min(myarray[hr, ymd.day - 1 + coloffset] +1, MAXCOUNT)
             line_count += 1
@@ -267,11 +270,17 @@ def makeColorGram(srcbucket, srckey):
 
     key = f'{srcfldr}/event_log_{back1}.csv'
     locback1 = f'{tmpfldr}/event_log_{back1}.csv'
-    s3.meta.client.download_file(srcbucket, key, locback1)
+    try:
+        s3.meta.client.download_file(srcbucket, key, locback1)
+    except Exception:
+        pass
 
     key = f'{srcfldr}/event_log_{back2}.csv'
     locback2 = f'{tmpfldr}/event_log_{back2}.csv'
-    s3.meta.client.download_file(srcbucket, key, locback2)
+    try:
+        s3.meta.client.download_file(srcbucket, key, locback2)
+    except Exception:
+        pass
 
     hrs = range(1, 25)
     # create heatmap for this month
@@ -279,6 +288,7 @@ def makeColorGram(srcbucket, srckey):
 
     # read the event log file
     myarray, cnts, dom, ym, mthdays = readEventLogFile(evtlog)
+    splitym = f'{ym[:4]}-{ym[4:]}'
 
     # labels for axes
     col_lbl = ["0", "", "", "3", "", "", "6", "", "", "9", "", "", "12",
@@ -310,7 +320,7 @@ def makeColorGram(srcbucket, srckey):
 
     plt.ylabel('Hour', labelpad=-2)
 
-    plt.text(0.5, 1.1, f'Heatmap for {ym}', horizontalalignment='center', transform=ax.transAxes, fontsize=15)
+    plt.text(0.5, 1.1, f'Heatmap for {splitym}', horizontalalignment='center', transform=ax.transAxes, fontsize=15)
     plt.xlabel('Day of Month')
     plt.tight_layout()
 
@@ -359,7 +369,7 @@ def makeColorGram(srcbucket, srckey):
     stat = config['observer']['Station']
     plt.title(f'{obs:<30}{loc1:<30}\n{cntr:<30}{loc2:<30}\n{city:<30}{freq:<30}\n'
         + f'{antn:<30}{azim:<30}\n{rfpr:<30}{recv:<30}\n{obsm:<60}\n{comp:<60}\n\n'
-        + stat + ' Meteor Station\nCount of detections per hour ' + ym
+        + stat + ' Meteor Station\nCount of detections per hour ' + splitym
         + '-' + dom, loc='left')
 
     plt.tight_layout()
