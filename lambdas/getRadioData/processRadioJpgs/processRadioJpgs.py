@@ -37,6 +37,14 @@ def updateInterestingJpgs(srcbucket, srckey):
         s3.upload_file(img3d, destbucket, sc2key, ExtraArgs=extraargs) 
     except Exception:
         print(f'unable to put the image {img3d}')
+
+    wavfile = glob.glob(os.path.join(tmploc, 'AUD*.wav'))[0]
+    audkey = 'Radio/audio.wav'
+    try:
+        s3.upload_file(wavfile, destbucket, audkey, ExtraArgs={'ContentType': 'audio/wav'}) 
+    except Exception:
+        print(f'unable to put the image {wavfile}')
+
     s3.delete_object(Bucket=srcbucket, Key=srckey)
     shutil.rmtree(tmploc)
 

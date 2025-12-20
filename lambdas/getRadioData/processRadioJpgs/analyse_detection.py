@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from scipy.signal import ShortTimeFFT
 from scipy.signal.windows import hamming
 import os
-import re
+import wave
 
 
 FULL_FREQUENCY_BAND = 18000   # Band for psd plot is +/- 18000 Hz
@@ -27,7 +27,6 @@ class MeteorPlotter():
         self.cmap_index = self.cmap_color_list.index(self.cmap_color)
 
     def plot_specgram(self, Pxx, f, bins, centre_freq, obs_time, outdir):
-
         freq_slice = np.where((f >= (centre_freq-SPECGRAM_BAND)/1e6) & (f <= (centre_freq+SPECGRAM_BAND)/1e6))
 
         f = f[freq_slice]
@@ -63,7 +62,6 @@ class MeteorPlotter():
 
 
     def plot_3dspecgram(self, Pxx, f, bins, centre_freq, obs_time, sample_rate, outdir):
-
         # Limit the data to the narrow frequency band
         freq_slice = np.where((f >= (centre_freq-SPECGRAM_BAND)/1e6) & (f <= (centre_freq+SPECGRAM_BAND)/1e6))
         f = f[freq_slice]
@@ -90,6 +88,24 @@ class MeteorPlotter():
         print("Saving", image_filename)
         plt.savefig(image_filename)
         return 
+    
+    def create_audio(self, samples, file_name):
+        x7 = samples * (10000 / np.max(np.abs(samples)))
+
+        # Save to file as 16-bit signed single-channel audio samples
+        # Note that we can throw away the imaginary part of the IQ sample data for USB
+        audio_filename = file_name.replace("SMP", "AUD")
+        audio_filename = audio_filename.replace("npz", "raw")
+        wav_filename = audio_filename.replace("raw", "wav")
+        print("Saving", wav_filename)
+        x7.astype("int16").tofile(audio_filename)
+        data = open(audio_filename, 'rb').read()
+        with wave.open(wav_filename, 'wb') as out_f:
+            out_f.setnchannels(1)
+            out_f.setsampwidth(2)
+            out_f.setframerate(44100)
+            out_f.writeframesraw(data)
+
 
 
 def get_observation_data(filename):
@@ -171,6 +187,7 @@ def createImages(filename):
 
         meteor_plotter.plot_specgram(Pxx, f, bins, centre_freq, obs_time, outdir)
         meteor_plotter.plot_3dspecgram(Pxx, f, bins, centre_freq, obs_time, sample_rate, outdir)
+        meteor_plotter.create_audio(samples, filename)
 
 
 if __name__ == "__main__":
