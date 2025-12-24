@@ -54,6 +54,9 @@ Resources:
       Role: arn:aws:iam::317976261112:role/lambda-s3-full-access-role
       Tags:
         billingtag: "MarksWebsite"
+      Environment:
+        Variables:
+          MIN_SNR: 30
       Events:
         createNewJpg:
           Type: S3
