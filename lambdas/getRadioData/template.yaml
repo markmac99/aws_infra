@@ -57,6 +57,7 @@ Resources:
       Environment:
         Variables:
           MIN_SNR: 30
+          MPLCONFIGDIR: /tmp/mpl
       Events:
         createNewJpg:
           Type: S3
