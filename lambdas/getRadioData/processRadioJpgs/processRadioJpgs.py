@@ -2,7 +2,6 @@ import shutil
 import tempfile
 import boto3
 import os
-import glob
 from analyse_detection import createImages
 
 
@@ -22,28 +21,46 @@ def updateInterestingJpgs(srcbucket, srckey):
         print(f'unable to get the file {srckey}')
         return 
 
-    createImages(locname)
+    min_snr = int(os.getenv('MIN_SNR', default=30))
+    img2d, img3d, wavfile = createImages(locname, min_snr=min_snr)
+    if img2d is not None:
+        # 2d waterfall
+        try:
+            s3.upload_file(img2d, destbucket, 'Radio/screenshot1.png', ExtraArgs=extraargs) 
+        except Exception:
+            print(f'unable to put the image {img2d} as screenshot1')
+        bn = os.path.basename(img2d)
+        spls = bn.split('_')
+        dtstr = spls[2]
+        key = f'Radio/{dtstr[:4]}/spec2d/{dtstr[:6]}/{dtstr}/{bn}'
+        try:
+            s3.upload_file(img2d, destbucket, key, ExtraArgs=extraargs) 
+        except Exception:
+            print(f'unable to save {bn} to S3')
 
-    img2d = glob.glob(os.path.join(tmploc, 'PSD*.png'))[0]
-    sc1key = 'Radio/screenshot1.png'
-    try:
-        s3.upload_file(img2d, destbucket, sc1key, ExtraArgs=extraargs) 
-    except Exception:
-        print(f'unable to put the image {img2d}')
-
-    img3d = glob.glob(os.path.join(tmploc, 'SPG*.png'))[0]
-    sc2key = 'Radio/screenshot2.png'
-    try:
-        s3.upload_file(img3d, destbucket, sc2key, ExtraArgs=extraargs) 
-    except Exception:
-        print(f'unable to put the image {img3d}')
-
-    wavfile = glob.glob(os.path.join(tmploc, 'AUD*.wav'))[0]
-    audkey = 'Radio/audio.wav'
-    try:
-        s3.upload_file(wavfile, destbucket, audkey, ExtraArgs={'ContentType': 'audio/wav'}) 
-    except Exception:
-        print(f'unable to put the image {wavfile}')
+        # 3d spectrogram
+        try:
+            s3.upload_file(img3d, destbucket, 'Radio/screenshot2.png', ExtraArgs=extraargs) 
+        except Exception:
+            print(f'unable to put the image {img3d} as screenshot2')
+        
+        bn = os.path.basename(img3d)
+        key = f'Radio/{dtstr[:4]}/spec3d/{dtstr[:6]}/{dtstr}/{bn}'
+        try:
+            s3.upload_file(img3d, destbucket, key, ExtraArgs=extraargs) 
+        except Exception:
+            print(f'unable to save {bn} to S3')
+        # audio 
+        try:
+            s3.upload_file(wavfile, destbucket, 'Radio/meteor_sound.wav', ExtraArgs={'ContentType': 'audio/wav'}) 
+        except Exception:
+            print(f'unable to put the image {wavfile}')
+        bn = os.path.basename(wavfile)
+        key = f'Radio/{dtstr[:4]}/audio/{dtstr[:6]}/{dtstr}/{bn}'
+        try:
+            s3.upload_file(wavfile, destbucket, key, ExtraArgs={'ContentType': 'audio/wav'})
+        except Exception:
+            print(f'unable to save {bn} to S3')
 
     s3.delete_object(Bucket=srcbucket, Key=srckey)
     shutil.rmtree(tmploc)

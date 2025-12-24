@@ -26,7 +26,7 @@ class MeteorPlotter():
         self.cmap_color_list = plt.colormaps()
         self.cmap_index = self.cmap_color_list.index(self.cmap_color)
 
-    def plot_specgram(self, Pxx, f, bins, centre_freq, obs_time, outdir):
+    def plot_specgram(self, Pxx, f, bins, centre_freq, obs_time, outdir, min_snr):
         freq_slice = np.where((f >= (centre_freq-SPECGRAM_BAND)/1e6) & (f <= (centre_freq+SPECGRAM_BAND)/1e6))
 
         f = f[freq_slice]
@@ -36,6 +36,9 @@ class MeteorPlotter():
 
         # Collect the detection stats
         mn, sigmax, init_freq, peak_freq, snr = get_capture_stats(Pxx, f, bins)
+        if snr < min_snr:
+            print(f'{snr} below threshold {min_snr}')
+            return None
 
         # Convert the plot data to dB
         _ = np.float16(Pxx)
@@ -58,7 +61,7 @@ class MeteorPlotter():
         print("Saving", image_filename)
         plt.savefig(image_filename)
         plt.close()
-        return 
+        return image_filename
 
 
     def plot_3dspecgram(self, Pxx, f, bins, centre_freq, obs_time, sample_rate, outdir):
@@ -87,7 +90,7 @@ class MeteorPlotter():
         image_filename = os.path.join(outdir,'SPG_' + str(int(centre_freq)) + '_' + str(int(sample_rate)) + obs_time.strftime('_%Y%m%d_%H%M%S_%f.png'))
         print("Saving", image_filename)
         plt.savefig(image_filename)
-        return 
+        return image_filename
     
     def create_audio(self, samples, file_name):
         x7 = samples * (10000 / np.max(np.abs(samples)))
@@ -98,14 +101,14 @@ class MeteorPlotter():
         audio_filename = audio_filename.replace("npz", "raw")
         wav_filename = audio_filename.replace("raw", "wav")
         print("Saving", wav_filename)
-        x7.astype("int16").tofile(audio_filename)
+        x7.real.astype("int16").tofile(audio_filename)
         data = open(audio_filename, 'rb').read()
         with wave.open(wav_filename, 'wb') as out_f:
             out_f.setnchannels(1)
             out_f.setsampwidth(2)
             out_f.setframerate(44100)
             out_f.writeframesraw(data)
-
+        return wav_filename
 
 
 def get_observation_data(filename):
@@ -153,7 +156,7 @@ def get_capture_stats(Pxx, f, bins):
     return mn, sigmax, detection_freq, peak_freq, snr
 
 
-def createImages(filename):
+def createImages(filename, min_snr=30):
 
     # Create a meteor plotter object
     meteor_plotter = MeteorPlotter()
@@ -185,10 +188,15 @@ def createImages(filename):
         f = sft.f
         f = (f + centre_freq - 2000) / 1e6
 
-        meteor_plotter.plot_specgram(Pxx, f, bins, centre_freq, obs_time, outdir)
-        meteor_plotter.plot_3dspecgram(Pxx, f, bins, centre_freq, obs_time, sample_rate, outdir)
-        meteor_plotter.create_audio(samples, filename)
-
+        img_2d = meteor_plotter.plot_specgram(Pxx, f, bins, centre_freq, obs_time, outdir, min_snr) 
+        if img_2d is not None:
+            img_3d = meteor_plotter.plot_3dspecgram(Pxx, f, bins, centre_freq, obs_time, sample_rate, outdir)
+            wav = meteor_plotter.create_audio(samples, filename)
+        else:
+            img_3d = None
+            wav = None
+        return img_2d, img_3d, wav
+    
 
 if __name__ == "__main__":
     createImages(sys.argv[1])
