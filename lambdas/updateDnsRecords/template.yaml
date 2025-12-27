@@ -20,6 +20,8 @@ Resources:
           Resource: '*'
           Effect: Allow
       Runtime: python3.11
+      Tags:
+        billingtag: "management"
       Events:
         EC2StateChangeEvent:
           Type: CloudWatchEvent
