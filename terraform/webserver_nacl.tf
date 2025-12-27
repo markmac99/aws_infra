@@ -15,6 +15,7 @@ variable "blocked_cidrs" {
 resource "aws_network_acl" "webserver_nacl" {
   tags = {
     Name = "Webserver_nacl"
+    "billingtag" = "MarksWebsite"
   }
   vpc_id = aws_vpc.main_vpc.id
 }

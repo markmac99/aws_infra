@@ -24,3 +24,14 @@ resource "aws_ses_receipt_rule" "fwder" {
     position        = 2
   }
 }
+resource "aws_ses_domain_identity" "markswebsite" {
+  domain = "markmcintyreastro.co.uk"
+}
+
+resource "aws_ses_email_identity" "mjmm456email" {
+  email = "mjmm456@gmail.com"
+}
+
+resource "aws_ses_email_identity" "cesmailemail" {
+  email = "mark.jm.mcintyre@cesmail.net"
+}
