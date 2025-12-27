@@ -35,19 +35,6 @@ resource "aws_s3_bucket_logging" "rrdlogging" {
   target_prefix = "rawradiodata/"
 }
 
-# created by a SAM function
-data "aws_s3_bucket" "rawsatdata" {
-  bucket = "mjmm-rawsatdata"
-}
-
-resource "aws_s3_bucket_logging" "rsdlogging" {
-  bucket = data.aws_s3_bucket.rawsatdata.id
-
-  target_bucket = aws_s3_bucket.mjmmauditing.id
-  target_prefix = "rawsatdata/"
-}
-
-
 resource "aws_s3_bucket_lifecycle_configuration" "mjmmdatalcp" {
   bucket = aws_s3_bucket.mjmm-data.id
   transition_default_minimum_object_size = "varies_by_storage_class"
