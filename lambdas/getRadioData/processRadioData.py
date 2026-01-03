@@ -10,51 +10,45 @@ import shutil
 import configparser as cfg
 import tempfile
 import datetime
-#from matplotlib.ticker import MultipleLocator
 
-interval = 100  # millisecs between loops in Colorlab
-MAXCOUNT = 99 # maximum reasonable meteorcount in an hour
+MAXCOUNT = 199 # maximum reasonable meteorcount in an hour
 
 
 def ConvertToCsv(yr, mth, dy, tmpfldr):
-    print('converting to CSV for ' + yr + mth + dy)
-    # dt = "{:4d}{:02d}{:02d}".format(yr,mt,dy)
-    dt = yr + mth # + dy
-
+    print(f'converting to CSV for {yr}{mth}{dy}')
+    dt = f'{yr}{mth}'
     config = cfg.ConfigParser()
     config.read(os.path.join(tmpfldr,'radiostation.ini'))
     lat = float(config['observer']['Lati'])
-    lng = float(config['observer']['Lati'])
+    lng = float(config['observer']['Longi'])
     id = config['observer']['station']
     alt = float(config['observer']['altitude'])
     tz = int(config['observer']['tz'])
-
     srcfile = os.path.join(tmpfldr, 'event_log_' + dt + '.csv')
-
     targfile = os.path.join(tmpfldr, 'R' + yr + mth + dy + '_' + id + '.csv')
-
     outf = open(targfile, 'w+')
-
     with open(srcfile) as inf:
         outf.write('Ver,Y,M,D,h,m,s,Bri,Dur,freq,ID,Long,Lat,Alt,Tz\n')
         mydata = csv.reader(inf, delimiter=',')
+        next(mydata)
         for row in mydata:
-            dstamp=row[0]
+            if len(row) <1:
+                continue
+            dstamp=row[1]
             fdy = dstamp[8:10]
             if fdy == dy: 
-                tstamp = row[1]
+                tstamp = row[2]
                 hr = tstamp[0:2]
                 mi = tstamp[3:5]
-                se = tstamp[6:9]
-                bri = round(float(row[2]) - float(row[3]), 2)
-                freq = row[6]
-                dur = float(row[7]) * interval
-                s = "RMOB,{:s},{:s},{:s},{:s},{:s},{:s},".format(yr, mth, dy, hr, mi, se)
-                s = s + "{:f},{:f},{:s},".format(bri, dur, freq)
-                s = s + "{:s},{:f},{:f},{:f},{:d}\n".format(id, lng, lat, alt, tz)
+                se = tstamp[6:]
+                bri = round(float(row[12]), 2)
+                freq = row[5]
+                dur = float(row[7]) 
+                s = f'RMOB,{yr},{mth},{dy},{hr},{mi},{se},'
+                s = s + f'{bri},{dur},{freq},'
+                s = s + f'{id},{lng},{lat},{alt},{tz}\n'
                 outf.write(s)
     outf.close
-
     return targfile
 
 
@@ -240,7 +234,6 @@ def readEventLogFile(evtfile, coloffset=0, inparray=None):
         print(f'Processed {line_count} lines.')
     cnts = myarray[:, ymd.day - 1 + coloffset]
     dys = "{:02d}".format(ymd.day)
-
     return myarray, cnts, dys, ym, mthdays
 
 
@@ -480,19 +473,24 @@ def uploadFiles(s3, heatmapname, rmoblatestfile, threemthfile, csvfile):
 
     try: 
         assumed_role_object=sts_client.assume_role(
-            RoleArn="arn:aws:iam::183798037734:role/service-role/S3FullAccess",
+            RoleArn="arn:aws:iam::183798037734:role/s3AccessForRadio",
             RoleSessionName="AssumeRoleSession1")
         credentials=assumed_role_object['Credentials']
-        s3u = boto3.resource('s3',
-            aws_access_key_id=credentials['AccessKeyId'],
-            aws_secret_access_key=credentials['SecretAccessKey'],
-            aws_session_token=credentials['SessionToken'])
-        print('about to push file')
-        targkey =f'archive/Tackley/Radio/{ymd[:4]}/{ymd[:6]}/{fname}'
-        s3u.meta.client.upload_file(csvfile, 'ukmda-shared', targkey, ExtraArgs=extraargs) 
-    except: 
+        try:
+            s3u = boto3.resource('s3',
+                aws_access_key_id=credentials['AccessKeyId'],
+                aws_secret_access_key=credentials['SecretAccessKey'],
+                aws_session_token=credentials['SessionToken'])
+            print('about to push file')
+            targkey =f'archive/Tackley/Radio/{ymd[:4]}/{ymd[:6]}/{fname}'
+            s3u.meta.client.upload_file(csvfile, 'ukmda-shared', targkey, ExtraArgs=extraargs) 
+        except Exception as e: 
+            print('unable to use credentials')
+            print(e)
+    except Exception as e:
         print('unable to assume role')
-
+        print(e)
+    
     return 
 
 
