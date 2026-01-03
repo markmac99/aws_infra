@@ -319,8 +319,9 @@ def makeColorGram(srcbucket, srckey):
     fig.tight_layout()
 
     plt.ylabel('Hour', labelpad=-2)
-
-    plt.text(0.5, 1.1, f'Heatmap for {splitym}', horizontalalignment='center', transform=ax.transAxes, fontsize=15)
+    title = f'Heatmap for {splitym}'
+    print(f'plotting for {title}')
+    ax.text(0.5, 1.1, title, horizontalalignment='center', transform=ax.transAxes, fontsize=15)
     plt.xlabel('Day of Month')
     plt.tight_layout()
 
@@ -497,7 +498,7 @@ def uploadFiles(s3, heatmapname, rmoblatestfile, threemthfile, csvfile):
 
 if __name__ == '__main__':
     s3bucket = 'mjmm-rawradiodata'
-    s3object = 'raw/event_log_202209.csv'
+    s3object = 'raw/event_log_202601.csv'
     print('calling makeColorGram')
     s3, heatmapname, rmoblatestfile, threemthfile, csvfile, tmpfldr = makeColorGram(s3bucket, s3object)
     #uploadFiles(s3, heatmapname, rmoblatestfile, threemthfile, csvfile)
