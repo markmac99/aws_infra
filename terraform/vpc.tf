@@ -72,6 +72,7 @@ resource "aws_route_table" "default" {
     cidr_block                = "172.32.0.0/16"
     vpc_peering_connection_id = "pcx-0beef413172ec795e"
   }
+  timeouts {}
 
   tags = {
     "Name"     = "default"
