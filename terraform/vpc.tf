@@ -42,7 +42,7 @@ resource "aws_subnet" "lambdaSubnet" {
   timeouts {}
   tags = {
     Name       = "lambdaSubnet"
-    billingtag = "ukmon"
+    billingtag = "Management"
   }
 }
 
