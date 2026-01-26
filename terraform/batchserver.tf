@@ -8,7 +8,7 @@ data "aws_kms_key" "container_key" {
 
 resource "aws_instance" "batchserver" {
   ami                  = "ami-0e58172bedd62916b" # "ami-0fe87e3ed54a170ce"
-  instance_type        = "t3a.micro"
+  instance_type        = "t3a.small"
   iam_instance_profile = data.aws_iam_instance_profile.s3fullaccess.name
   key_name             = aws_key_pair.marks_key.key_name
   security_groups      = [aws_security_group.ec2publicsg.name]
