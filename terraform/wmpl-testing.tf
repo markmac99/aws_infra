@@ -1,10 +1,9 @@
 # copyright mark mciontyre, 2024-
 
 # create the GMN server
-/*
+
 resource "aws_instance" "testserver" {
-  #ami                    = "ami-0e8d228ad90af673b"  # ubuntu 22.04
-  ami                     = "ami-0e681fbfa34618329" # my image based on Ubuntu 24.04 with stuff preinstalled
+  ami                     = "ami-0e681fbfa34618329"  # my image based on Ubuntu 24.04 with stuff preinstalled
   instance_type          = "c6a.4xlarge" # x64, 16 cpu, 32 GB 
   iam_instance_profile = data.aws_iam_instance_profile.s3fullaccess.name
   key_name             = aws_key_pair.marks_key.key_name
@@ -39,6 +38,7 @@ resource "aws_instance" "testserver" {
   }
 }
 
+/*
 resource "aws_route53_record" "testserver" {
   zone_id   = data.aws_route53_zone.mjmmwebsite.zone_id
   type      = "A"
@@ -46,7 +46,7 @@ resource "aws_route53_record" "testserver" {
   records   = [aws_instance.testserver.public_ip]
   ttl       = 60
 }
-
+*/
 resource "aws_cloudwatch_metric_alarm" "testServerIdle" {
   alarm_name                = "Test server idle shutdown"
   comparison_operator       = "LessThanOrEqualToThreshold"
@@ -72,4 +72,75 @@ resource "aws_cloudwatch_metric_alarm" "testServerIdle" {
 
    actions_enabled           = true
 }
+#############################
+
+resource "aws_instance" "client1" {
+  ami                     = "ami-09dbc7ce74870d573" 
+  # previous AMI "ami-0e681fbfa34618329"
+  instance_type          = "c6a.large" # x64, 2c 8G
+  iam_instance_profile = data.aws_iam_instance_profile.s3fullaccess.name
+  key_name             = aws_key_pair.marks_key.key_name
+  security_groups      = [aws_security_group.ec2publicsg.name]
+
+  root_block_device {
+    tags = {
+      "Name"       = "Client1RootDisk"
+      "billingtag" = "GMN"
+    }
+    volume_size = 15
+    volume_type = "gp3"
+    throughput = 125
+    iops = 3000
+    encrypted = true
+    kms_key_id = data.aws_kms_key.container_key.arn
+  }
+  private_dns_name_options {
+     hostname_type  = "resource-name"
+  }
+
+    metadata_options {
+        http_tokens = "required"
+        instance_metadata_tags = "enabled"
+    }
+
+  tags = {
+    "Name"       = "client1"
+    "billingtag" = "GMN"
+    "Route53FQDN" = "client1.markmcintyreastro.co.uk"
+    "DNSRecordType" = "A"
+  }
+}
+/*
+resource "aws_route53_record" "client1" {
+  zone_id   = data.aws_route53_zone.mjmmwebsite.zone_id
+  type      = "A"
+  name      = "client1"
+  records   = [aws_instance.client1.public_ip]
+  ttl       = 60
+}
 */
+resource "aws_cloudwatch_metric_alarm" "client1Idle" {
+  alarm_name                = "Client1 idle shutdown"
+  comparison_operator       = "LessThanOrEqualToThreshold"
+  evaluation_periods        = "6"
+  metric_name               = "CPUUtilization"
+  namespace                 = "AWS/EC2"
+  period                    = "600"
+  statistic                 = "Maximum"
+  threshold                 = "0.5"
+  alarm_description         = "CPUUtilization <= 0.5 for 6 datapoints within 30 minutes"
+  insufficient_data_actions = []
+  ok_actions                = []
+  datapoints_to_alarm       = 4
+  alarm_actions = [
+    "arn:aws:automate:${var.region}:ec2:stop",
+  ]
+  dimensions = {
+    "InstanceId" = aws_instance.client1.id
+  }
+  tags = {
+    "billingtag" = "wmpl"
+  }
+
+   actions_enabled           = true
+}
