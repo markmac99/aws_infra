@@ -1,0 +1,15 @@
+---
+- hosts: ukmonhelper2
+  gather_facts: no
+  vars:
+    srcdir: "/mnt/c/Users/{{ lookup('env','USER' )}}/OneDrive/dev/tackley/aws_infra/"
+    destdir: "/mnt/c/Users/{{ lookup('env','USER' )}}/scripts"
+  tasks:
+  - name: Copy files
+    copy: src={{ item.src }} dest={{ item.dest }} mode={{ item.mode }}
+    delegate_to: localhost
+    with_items:
+    - {src: '{{srcdir}}/scripts/startTestserver.ps1', dest: '{{destdir}}/', mode: '644', backup: no, directory_mode: no }
+    - {src: '{{srcdir}}/scripts/stopTestserver.ps1', dest: '{{destdir}}/', mode: '644', backup: no, directory_mode: no }
+    - {src: '{{srcdir}}/scripts/startClient1.ps1', dest: '{{destdir}}/', mode: '644', backup: no, directory_mode: no }
+    - {src: '{{srcdir}}/scripts/reimageTestServer.ps1', dest: '{{destdir}}/', mode: '644', backup: no, directory_mode: no }
