@@ -55,8 +55,8 @@ resource "aws_cloudwatch_metric_alarm" "testServerIdle" {
   namespace                 = "AWS/EC2"
   period                    = "600"
   statistic                 = "Maximum"
-  threshold                 = "0.5"
-  alarm_description         = "CPUUtilization <= 0.5 for 6 datapoints within 30 minutes"
+  threshold                 = "0.1"
+  alarm_description         = "CPUUtilization <= 0.1 for 6 datapoints within 30 minutes"
   insufficient_data_actions = []
   ok_actions                = []
   datapoints_to_alarm       = 4
@@ -110,15 +110,6 @@ resource "aws_instance" "client1" {
     "DNSRecordType" = "A"
   }
 }
-/*
-resource "aws_route53_record" "client1" {
-  zone_id   = data.aws_route53_zone.mjmmwebsite.zone_id
-  type      = "A"
-  name      = "client1"
-  records   = [aws_instance.client1.public_ip]
-  ttl       = 60
-}
-*/
 resource "aws_cloudwatch_metric_alarm" "client1Idle" {
   alarm_name                = "Client1 idle shutdown"
   comparison_operator       = "LessThanOrEqualToThreshold"
@@ -127,7 +118,7 @@ resource "aws_cloudwatch_metric_alarm" "client1Idle" {
   namespace                 = "AWS/EC2"
   period                    = "600"
   statistic                 = "Maximum"
-  threshold                 = "0.5"
+  threshold                 = "0.1"
   alarm_description         = "CPUUtilization <= 0.5 for 6 datapoints within 30 minutes"
   insufficient_data_actions = []
   ok_actions                = []
