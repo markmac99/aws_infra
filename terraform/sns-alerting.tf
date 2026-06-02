@@ -21,11 +21,3 @@ resource "aws_sns_topic" "s3activity" {
     billingtag="Management"
   }
 }
-
-resource "aws_sns_topic" "ebsactivity" {
-  name = "EBSActivit"
-  display_name = "DiskspaceMonitoring"
-  tags = {
-    billingtag="Management"
-  }
-}

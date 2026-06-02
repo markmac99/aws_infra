@@ -3,7 +3,8 @@
 # create the GMN server
 
 resource "aws_instance" "testserver" {
-  ami                     = "ami-0e681fbfa34618329"  # my image based on Ubuntu 24.04 with stuff preinstalled
+  #ami                     = "ami-0e681fbfa34618329"  # my image based on Ubuntu 24.04 with stuff preinstalled
+  ami                    = "ami-0f9c6834db203b0f9" # latest image
   instance_type          = "c6a.4xlarge" # x64, 16 cpu, 32 GB 
   iam_instance_profile = data.aws_iam_instance_profile.s3fullaccess.name
   key_name             = aws_key_pair.marks_key.key_name
@@ -38,15 +39,6 @@ resource "aws_instance" "testserver" {
   }
 }
 
-/*
-resource "aws_route53_record" "testserver" {
-  zone_id   = data.aws_route53_zone.mjmmwebsite.zone_id
-  type      = "A"
-  name      = "testserver"
-  records   = [aws_instance.testserver.public_ip]
-  ttl       = 60
-}
-*/
 resource "aws_cloudwatch_metric_alarm" "testServerIdle" {
   alarm_name                = "Test server idle shutdown"
   comparison_operator       = "LessThanOrEqualToThreshold"
@@ -118,7 +110,7 @@ resource "aws_cloudwatch_metric_alarm" "client1Idle" {
   namespace                 = "AWS/EC2"
   period                    = "600"
   statistic                 = "Maximum"
-  threshold                 = "0.1"
+  threshold                 = "0.5"
   alarm_description         = "CPUUtilization <= 0.5 for 6 datapoints within 30 minutes"
   insufficient_data_actions = []
   ok_actions                = []
