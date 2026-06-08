@@ -65,7 +65,7 @@ resource "aws_cloudwatch_metric_alarm" "testServerIdle" {
    actions_enabled           = true
 }
 #############################
-
+/*
 resource "aws_instance" "client1" {
   ami                     = "ami-09dbc7ce74870d573" 
   # previous AMI "ami-0e681fbfa34618329"
@@ -127,3 +127,4 @@ resource "aws_cloudwatch_metric_alarm" "client1Idle" {
 
    actions_enabled           = true
 }
+*/
