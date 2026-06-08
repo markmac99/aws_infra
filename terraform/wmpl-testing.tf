@@ -3,8 +3,7 @@
 # create the GMN server
 
 resource "aws_instance" "testserver" {
-  #ami                     = "ami-0e681fbfa34618329"  # my image based on Ubuntu 24.04 with stuff preinstalled
-  ami                    = "ami-0f9c6834db203b0f9" # latest image
+  ami                    = "ami-0f9c6834db203b0f9" # latest image based on Ubuntu 24.04 with stuff preinstalled
   instance_type          = "c6a.4xlarge" # x64, 16 cpu, 32 GB 
   iam_instance_profile = data.aws_iam_instance_profile.s3fullaccess.name
   key_name             = aws_key_pair.marks_key.key_name
