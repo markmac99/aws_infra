@@ -21,12 +21,19 @@ resource "aws_dynamodb_table" "freecycle_table" {
   
   global_secondary_index {
     name               = "recType-item-index"
-    hash_key           = "recType"
-    range_key          = "Item"
     projection_type    = "ALL"
     non_key_attributes = []
     read_capacity      = 0
     write_capacity     = 0
+
+    key_schema {
+    attribute_name = "recType"
+    key_type       = "HASH"
+    }
+    key_schema {
+      attribute_name = "Item"
+      key_type       = "RANGE"
+    }
   }
   ttl {
     attribute_name = "expirydate"
@@ -61,12 +68,18 @@ resource "aws_dynamodb_table" "toycycle_table" {
   
   global_secondary_index {
     name               = "recType-item-index"
-    hash_key           = "recType"
-    range_key          = "Item"
     projection_type    = "ALL"
     non_key_attributes = []
     read_capacity      = 0
     write_capacity     = 0
+    key_schema {
+    attribute_name = "recType"
+    key_type       = "HASH"
+    }
+    key_schema {
+      attribute_name = "Item"
+      key_type       = "RANGE"
+    }
   }
   ttl {
     attribute_name = "expirydate"
