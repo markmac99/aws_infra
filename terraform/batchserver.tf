@@ -6,9 +6,9 @@ data "aws_kms_key" "container_key" {
     key_id = "arn:aws:kms:eu-west-2:317976261112:key/e9b72945-eaac-4452-9708-93963b09976d"
 }
 
-resource "aws_instance" "batchserver" {
-  ami                  = "ami-0e58172bedd62916b" # "ami-0fe87e3ed54a170ce"
-  instance_type        = "t3a.small"
+resource "aws_instance" "batchserver2026" {
+  ami                  = "ami-05a11327df75a9840" # "ami-0fe87e3ed54a170ce"
+  instance_type        = "t4g.small"
   iam_instance_profile = data.aws_iam_instance_profile.s3fullaccess.name
   key_name             = aws_key_pair.marks_key.key_name
   security_groups      = [aws_security_group.ec2publicsg.name]
@@ -16,8 +16,8 @@ resource "aws_instance" "batchserver" {
 
   root_block_device {
     tags = {
-      "Name"       = "BatcherverRootDisk"
-      "billingtag" = "MarksWebsite"
+      "Name"       = "Batcherver2026RootDisk"
+      "billingtag" = "Management"
     }
     volume_size = 30
     volume_type = "gp3"
@@ -36,19 +36,25 @@ resource "aws_instance" "batchserver" {
     }
 
   tags = {
-    "Name"       = "batchserver"
-    "billingtag" = "MarksWebsite"
+    "Name"       = "batchserver2026"
+    "billingtag" = "Management"
     "Route53FQDN" = "batchserver.markmcintyreastro.co.uk"
     "DNSRecordType" = "A"
   }
 }
 
-resource "aws_route53_record" "batchserver" {
-  zone_id   = data.aws_route53_zone.mjmmwebsite.zone_id
-  type      = "A"
-  name      = "batchserver"
-  records   = [aws_instance.batchserver.public_ip]
-  ttl       = 60
+resource "aws_network_interface" "batchserver_nic" {
+  subnet_id   = aws_subnet.ec2Subnet.id
+  ipv6_address_count = 1
+  ipv6_address_list_enabled = false
+  private_ip_list_enabled   = false
+  attachment {
+    instance = aws_instance.batchserver2026.id
+    device_index = 0
+  }
+  tags = {
+    billingtag = "Management"
+  }
 }
 
 resource "aws_security_group" "ec2publicsg" {
@@ -176,3 +182,4 @@ resource "aws_security_group" "ec2publicsg" {
     billingtag = "Management"
   }
 }
+

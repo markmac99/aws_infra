@@ -1,7 +1,7 @@
 # copyright mark mciontyre, 2024-
 
 # create the GMN server
-
+/*
 resource "aws_instance" "testserver" {
   ami                    = "ami-0f9c6834db203b0f9" # latest image based on Ubuntu 24.04 with stuff preinstalled
   instance_type          = "c6a.4xlarge" # x64, 16 cpu, 32 GB 
@@ -63,6 +63,7 @@ resource "aws_cloudwatch_metric_alarm" "testServerIdle" {
 
    actions_enabled           = true
 }
+*/
 #############################
 /*
 resource "aws_instance" "client1" {
